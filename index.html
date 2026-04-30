@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>Music Page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- فونت قشنگ از CDN -->
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            direction: rtl;
+            font-family: 'Vazirmatn', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* پس‌زمینه تمام صفحه */
+        .bg {
+            position: fixed;
+            inset: 0;
+            background: url("background.jpg") center center / cover no-repeat fixed;
+            filter: blur(2px) brightness(0.8);
+            z-index: -1;
+        }
+
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(
+                to bottom,
+                rgba(0, 0, 0, 0.55),
+                rgba(0, 0, 0, 0.85)
+            );
+            z-index: -1;
+        }
+
+        .container {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 360px;
+            background: rgba(10, 10, 15, 0.92);
+            border-radius: 20px;
+            padding: 18px 18px 16px;
+            color: #f5f5f5;
+            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .track-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .cover {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            overflow: hidden;
+            flex-shrink: 0;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.7);
+        }
+
+        .cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .titles {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .track-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #ffffff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .track-artist {
+            font-size: 0.8rem;
+            color: #c5c5c5;
+            margin-top: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .device-info {
+            font-size: 0.7rem;
+            color: #a3a3a3;
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+
+        /* پلیر */
+        .player {
+            margin-top: 12px;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 999px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, #ff6a88, #ffb86c);
+            border-radius: 999px;
+            transition: width 0.1s linear;
+        }
+
+        .time-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+            font-size: 0.7rem;
+            color: #d0d0d0;
+        }
+
+        .controls {
+            margin-top: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .play-btn {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: radial-gradient(circle at 30% 30%, #ff9a9e, #ff6a88);
+            color: white;
+            box-shadow:
+                0 12px 25px rgba(0, 0, 0, 0.7),
+                0 0 0 1px rgba(255, 255, 255, 0.15);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .play-btn:active {
+            transform: scale(0.94) translateY(1px);
+            box-shadow:
+                0 6px 18px rgba(0, 0, 0, 0.8),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+
+        .play-icon {
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 9px 0 9px 15px;
+            border-color: transparent transparent transparent white;
+            margin-left: 3px;
+        }
+
+        .pause-icon {
+            display: flex;
+            gap: 4px;
+        }
+
+        .pause-icon span {
+            width: 4px;
+            height: 16px;
+            background: white;
+            border-radius: 999px;
+        }
+
+        .volume {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1;
+            justify-content: flex-end;
+        }
+
+        .volume label {
+            font-size: 0.75rem;
+            color: #bdbdbd;
+        }
+
+        .volume input[type="range"] {
+            width: 100px;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.18);
+            outline: none;
+        }
+
+        .volume input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+        }
+
+        .volume input[type="range"]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* متن پایین */
+        .footer-text {
+            margin-top: 18px;
+            font-size: 0.7rem;
+            color: #8d8d8d;
+            text-align: center;
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 16px 14px 14px;
+                border-radius: 18px;
+            }
+            .cover {
+                width: 60px;
+                height: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="overlay"></div>
+
+<div class="container">
+    <div class="card">
+        <div class="track-header">
+            <div class="cover">
+                <!-- کاور آهنگ -->
+                <img src="cover.jpg" alt="Cover">
+            </div>
+            <div class="titles">
+                <!-- اسم آهنگ -->
+                <div class="track-title">اسم آهنگ اینجا</div>
+                <!-- نام آرتیست / توضیح -->
+                <div class="track-artist">نام خواننده یا توضیح کوتاه</div>
+
+                <!-- نمایش ساده نوع دیوایس / مرورگر -->
+                <div class="device-info" id="device-info">
+                    در حال تشخیص دستگاه...
+                </div>
+            </div>
+        </div>
+
+        <div class="player">
+            <div class="progress-container" id="progress-container">
+                <div class="progress" id="progress"></div>
+            </div>
+            <div class="time-row">
+                <span id="current-time">00:00</span>
+                <span id="duration">--:--</span>
+            </div>
+
+            <div class="controls">
+                <button class="play-btn" id="play-btn">
+                    <div class="play-icon" id="play-icon"></div>
+                </button>
+
+                <div class="volume">
+                    <label for="volume-range">صدا</label>
+                    <input id="volume-range" type="range" min="0" max="1" step="0.01" value="0.8">
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-text">
+            برای پخش آهنگ روی دکمه ضربه بزن.
+        </div>
+    </div>
+</div>
+
+<!-- فایل صوتی -->
+<audio id="audio" src="music.mp3"></audio>
+
+<script>
+    // --- هندل دستگاه / مرورگر ساده و قانونی ---
+    function getDeviceInfo() {
+        const ua = navigator.userAgent || "";
+        const platform = navigator.platform || "";
+        const language = navigator.language || navigator.userLanguage || "";
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        let os = "نامشخص";
+        if (/Android/i.test(ua)) os = "Android";
+        else if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS";
+        else if (/Win/i.test(ua)) os = "Windows";
+        else if (/Mac/i.test(ua)) os = "macOS";
+        else if (/Linux/i.test(ua)) os = "Linux";
+
+        let deviceType = "Desktop";
+        if (width < 768) deviceType = "Mobile";
+        else if (width < 1024) deviceType = "Tablet / Small Laptop";
+
+        let browser = "Browser";
+        if (ua.includes("Chrome") && !ua.includes("Edg") && !ua.includes("OPR")) browser = "Chrome";
+        else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
+        else if (ua.includes("Firefox")) browser = "Firefox";
+        else if (ua.includes("Edg")) browser = "Microsoft Edge";
+        else if (ua.includes("OPR") || ua.includes("Opera")) browser = "Opera";
+
+        return {
+            os,
+            deviceType,
+            browser,
+            language,
+            resolution: width + "x" + height,
+            platform
+        };
+    }
+
+    function renderDeviceInfo() {
+        const infoElement = document.getElementById("device-info");
+        const info = getDeviceInfo();
+
+        infoElement.innerHTML =
+            "دستگاه: " + info.deviceType +
+            " | سیستم‌عامل: " + info.os +
+            "<br>مرورگر: " + info.browser +
+            " | زبان: " + info.language +
+            "<br>رزولوشن: " + info.resolution;
+    }
+
+    renderDeviceInfo();
+    window.addEventListener("resize", renderDeviceInfo);
+
+    // --- پلیر ---
+    const audio = document.getElementById("audio");
+    const playBtn = document.getElementById("play-btn");
+    const playIcon = document.getElementById("play-icon");
+    const progressContainer = document.getElementById("progress-container");
+    const progress = document.getElementById("progress");
+    const currentTimeEl = document.getElementById("current-time");
+    const durationEl = document.getElementById("duration");
+    const volumeRange = document.getElementById("volume-range");
+
+    let isPlaying = false;
+
+    function setPlayIcon() {
+        playIcon.innerHTML = "";
+        playIcon.className = "";
+        if (isPlaying) {
+            playIcon.classList.add("pause-icon");
+            const bar1 = document.createElement("span");
+            const bar2 = document.createElement("span");
+            playIcon.appendChild(bar1);
+            playIcon.appendChild(bar2);
+        } else {
+            playIcon.classList.add("play-icon");
+        }
+    }
+
+    setPlayIcon();
+
+    playBtn.addEventListener("click", () => {
+        if (!isPlaying) {
+            audio.play().catch(() => {
+                // اگر مرورگر اجازه اتوپلی نداد، فقط خطا رو نادیده بگیر
+            });
+        } else {
+            audio.pause();
+        }
+    });
+
+    audio.addEventListener("play", () => {
+        isPlaying = true;
+        setPlayIcon();
+    });
+
+    audio.addEventListener("pause", () => {
+        isPlaying = false;
+        setPlayIcon();
+    });
+
+    audio.addEventListener("loadedmetadata", () => {
+        const duration = audio.duration;
+        durationEl.textContent = formatTime(duration);
+    });
+
+    audio.addEventListener("timeupdate", () => {
+        const current = audio.currentTime;
+        const duration = audio.duration || 0;
+        currentTimeEl.textContent = formatTime(current);
+
+        if (duration > 0) {
+            const percent = (current / duration) * 100;
+            progress.style.width = percent + "%";
+        }
+    });
+
+    audio.addEventListener("ended", () => {
+        isPlaying = false;
+        setPlayIcon();
+        progress.style.width = "0";
+        currentTimeEl.textContent = "00:00";
+    });
+
+    progressContainer.addEventListener("click", (e) => {
+        const width = progressContainer.clientWidth;
+        const clickX = e.offsetX;
+        const duration = audio.duration;
+        if (duration > 0) {
+            audio.currentTime = (clickX / width) * duration;
+        }
+    });
+
+    volumeRange.addEventListener("input", () => {
+        audio.volume = volumeRange.value;
+    });
+
+    function formatTime(sec) {
+        if (!sec || isNaN(sec)) return "00:00";
+        const minutes = Math.floor(sec / 60);
+        const seconds = Math.floor(sec % 60);
+        return String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0");
+    }
+</script>
+</body>
+</html>
